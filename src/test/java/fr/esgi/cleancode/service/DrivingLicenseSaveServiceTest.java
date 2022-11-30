@@ -5,63 +5,51 @@ import fr.esgi.cleancode.model.DrivingLicence;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
-
 public class DrivingLicenseSaveServiceTest {
     @InjectMocks
-    DrivingLicenceSaveService drivingLicenceSaveService;
-
+    DrivingLicenceCreationService drivingLicenceCreationService;
     @Mock
-    InMemoryDatabase inMemoryDatabase;
-
+    InMemoryDatabase inMemoryDrivingLicenceDatabase;
     @Mock
     DrivingLicenceIdGenerationService drivingLicenceIdGenerationService;
-
-
     @Captor
     ArgumentCaptor<DrivingLicence> drivingLicenceArgumentCaptor;
 
-
-    @ParameterizedTest
-    @NullSource
-    @ValueSource(strings = {"", "12345","123123ABC123123","11111111111111111" })
-    void shouldThrowErrorWhenCreateDrivingLicenceWithValidSocialSecurityNumber(String drivingLicenceSocialSecurityNumber) {
-        Assertions.assertFalse(
-            drivingLicenceSaveService.isValidSocialSecurityNumber(drivingLicenceSocialSecurityNumber)
-        );
-    }
-
     @ParameterizedTest
     @ValueSource(strings = {"123456789098765", "875429072342342" })
-    void shouldNotThrowErrorWhenCreateDrivingLicenceWithValidSocialSecurityNumber(String drivingLicenceSocialSecurityNumber) {
-        Assertions.assertTrue(
-            drivingLicenceSaveService.isValidSocialSecurityNumber(drivingLicenceSocialSecurityNumber)
-        );
-    }
+    void shouldCreateDrivingLicenceFromSocialSecurityNumber(String socialSecurityNumber) {
+        // Arrange
+        var uuidToTest = UUID.randomUUID();
+        Optional<DrivingLicence> notFoundDrivingLicenceById = Optional.empty();
+        var drivingLicenseToTest = DrivingLicence.builder()
+                .id(uuidToTest)
+                .driverSocialSecurityNumber(socialSecurityNumber)
+                .build();
+        Mockito.when(drivingLicenceIdGenerationService.generateNewDrivingLicenceId()).thenReturn(uuidToTest);
+        Mockito.when(inMemoryDrivingLicenceDatabase.findById(Mockito.any(UUID.class))).thenReturn(notFoundDrivingLicenceById);
+        Mockito.when(inMemoryDrivingLicenceDatabase.save(uuidToTest,drivingLicenseToTest)).thenReturn(drivingLicenseToTest);
 
-    @ParameterizedTest
-    @ValueSource(strings = {"123456789098765", "875429072342342" })
-    void shouldCreateDrivingLicenceAndVerifyValues(String drivingLicenceSocialSecurityNumber) {
-        UUID uidToUse = UUID.randomUUID();
-        DrivingLicence dlToUse = DrivingLicence.builder().id(uidToUse).driverSocialSecurityNumber(drivingLicenceSocialSecurityNumber).build();
-        Mockito.when(drivingLicenceIdGenerationService.generateNewDrivingLicenceId()).thenReturn(uidToUse);
-        Mockito.when(inMemoryDatabase.save(uidToUse,dlToUse)).thenReturn(dlToUse);
-        drivingLicenceSaveService.createDrivingLicence(drivingLicenceSocialSecurityNumber);
-        Mockito.verify(inMemoryDatabase, Mockito.times(1)).save(eq(uidToUse), drivingLicenceArgumentCaptor.capture());
-        Mockito.verifyNoMoreInteractions(inMemoryDatabase);
+        // Do
+        DrivingLicence returnedDrivingLicence = drivingLicenceCreationService.createDrivingLicenceFromSocialSecurityNumber(socialSecurityNumber);
+
+        // Check
+        Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1))
+                .save(eq(uuidToTest), drivingLicenceArgumentCaptor.capture());
+        Mockito.verifyNoMoreInteractions(inMemoryDrivingLicenceDatabase);
         DrivingLicence capturedDrivingLicense = drivingLicenceArgumentCaptor.getValue();
-        Assertions.assertEquals(capturedDrivingLicense.getId(), uidToUse);
+        Assertions.assertEquals(capturedDrivingLicense.getId(), uuidToTest);
         Assertions.assertEquals(capturedDrivingLicense.getAvailablePoints(), 12);
-        Assertions.assertEquals(capturedDrivingLicense.getDriverSocialSecurityNumber(), drivingLicenceSocialSecurityNumber);
-
+        Assertions.assertEquals(capturedDrivingLicense.getDriverSocialSecurityNumber(), socialSecurityNumber);
+        Assertions.assertEquals(capturedDrivingLicense.getAvailablePoints(), returnedDrivingLicence.getAvailablePoints());
     }
 }
