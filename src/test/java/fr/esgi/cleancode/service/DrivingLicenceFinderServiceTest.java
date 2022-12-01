@@ -11,43 +11,47 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.mockito.Mockito.atMostOnce;
-
 @ExtendWith(MockitoExtension.class)
 class DrivingLicenceFinderServiceTest {
 
     @InjectMocks
-    private DrivingLicenceFinderService service;
+    private DrivingLicenceFinderService drivingLicenceFinderService;
 
     @Mock
-    private InMemoryDatabase database;
+    private InMemoryDatabase inMemoryDrivingLicenceDatabase;
+
+    @Captor
+    ArgumentCaptor<UUID> drivingLicenceUuidArgumentCaptor;
 
     @Test
-    void should_find() {
-
-        Optional<DrivingLicence> drivenLicenceToReturn = Optional.of(DrivingLicence.builder().build());
-        UUID uuid = UUID.randomUUID();
-
-        Mockito.when(database.findById(uuid))
+    void shouldFindDrivingLicenseById() {
+        UUID uuidToTest = UUID.randomUUID();
+        Optional<DrivingLicence> drivenLicenceToReturn = Optional.of(DrivingLicence.builder().id(uuidToTest).build());
+        Mockito.when(inMemoryDrivingLicenceDatabase.findById(uuidToTest))
                 .thenReturn(drivenLicenceToReturn);
-        Optional<DrivingLicence> returnedLicence = service.findById(uuid);
 
-        Mockito.verify(database, Mockito.times(1)).findById(uuid);
+        Optional<DrivingLicence> returnedLicence = drivingLicenceFinderService.findById(uuidToTest);
+
+        Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1))
+                .findById(drivingLicenceUuidArgumentCaptor.capture());
+        Mockito.verifyNoMoreInteractions(inMemoryDrivingLicenceDatabase);
         Assertions.assertTrue(returnedLicence.isPresent());
         Assertions.assertEquals(12, returnedLicence.get().getAvailablePoints());
+        Assertions.assertEquals(drivingLicenceUuidArgumentCaptor.getValue(), returnedLicence.get().getId());
     }
 
     @Test
-    void should_not_find() {
-
-        Optional<DrivingLicence> drivenLicenceToReturn = Optional.of(DrivingLicence.builder().build());
-        UUID uuid = UUID.randomUUID();
-
-        Mockito.when(database.findById(uuid))
+    void shouldNotFindDrivingLicenseById() {
+        UUID uuidToTest = UUID.randomUUID();
+        Mockito.when(inMemoryDrivingLicenceDatabase.findById(uuidToTest))
                 .thenReturn(Optional.empty());
-        Optional<DrivingLicence> returnedLicence = service.findById(uuid);
 
-        Mockito.verify(database, Mockito.times(1)).findById(uuid);
+        Optional<DrivingLicence> returnedLicence = drivingLicenceFinderService.findById(uuidToTest);
+
+        Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1))
+                .findById(drivingLicenceUuidArgumentCaptor.capture());
+        Mockito.verifyNoMoreInteractions(inMemoryDrivingLicenceDatabase);
         Assertions.assertTrue(returnedLicence.isEmpty());
+        Assertions.assertEquals(drivingLicenceUuidArgumentCaptor.getValue(), uuidToTest);
     }
 }

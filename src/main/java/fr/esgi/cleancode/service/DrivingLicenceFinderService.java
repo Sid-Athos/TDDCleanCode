@@ -10,9 +10,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DrivingLicenceFinderService {
 
-    private final InMemoryDatabase database;
+    private final InMemoryDatabase inMemoryDrivingLicenceDatabase;
 
     public Optional<DrivingLicence> findById(UUID drivingLicenceId) {
-        return database.findById(drivingLicenceId);
+        return inMemoryDrivingLicenceDatabase.findById(drivingLicenceId);
     }
 }

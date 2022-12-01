@@ -3,6 +3,7 @@ package fr.esgi.cleancode.service;
 import fr.esgi.cleancode.database.InMemoryDatabase;
 import fr.esgi.cleancode.exception.ResourceNotFoundException;
 import fr.esgi.cleancode.model.DrivingLicence;
+import fr.esgi.cleancode.model.DrivingLicencePointsRange;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
@@ -10,27 +11,23 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 public class DrivingLicencePointOperationService {
+    private final InMemoryDatabase inMemoryDrivingLicenceDatabase;
 
-    private final InMemoryDatabase database;
+    public DrivingLicence subtractPointsFromDrivingLicence(UUID drivingLicenceId, int pointsToSubtract) {
+        Optional<DrivingLicence> maybeDrivingLicence = inMemoryDrivingLicenceDatabase.findById(drivingLicenceId);
+        var foundDrivingLicence = maybeDrivingLicence.orElseThrow(() ->
+                new ResourceNotFoundException("Driving Licence does not exist !")
+        );
+        var drivingLicenceAvailablePoints = foundDrivingLicence.getAvailablePoints();
 
-    public DrivingLicence subtract(UUID drivingLicenceId, int point) throws ResourceNotFoundException {
-        Optional<DrivingLicence> drivingLicence = database.findById(drivingLicenceId);
+        int subtractedPoints = computePointsSubtractionOnDrivingLicence(pointsToSubtract, drivingLicenceAvailablePoints);
+        DrivingLicence drivingLicenceWithUpdatedPoints = DrivingLicence.updateDrivingLicencePoints(foundDrivingLicence, subtractedPoints);
+        inMemoryDrivingLicenceDatabase.save(drivingLicenceId, drivingLicenceWithUpdatedPoints);
+        return drivingLicenceWithUpdatedPoints;
+    }
 
-        if (drivingLicence.isEmpty()) {
-            throw new ResourceNotFoundException("Driving Licence Not found !");
-        }
-
-        int sub = drivingLicence.get().getAvailablePoints() - point;
-        if (sub < 0 )
-            sub = 0;
-
-        DrivingLicence drivingLicenceModified = DrivingLicence.builder().id(drivingLicenceId)
-                .driverSocialSecurityNumber(drivingLicence.get()
-                .getDriverSocialSecurityNumber())
-                .availablePoints(sub)
-                .build();
-
-        database.save(drivingLicenceId, drivingLicenceModified);
-        return drivingLicenceModified;
+    private int computePointsSubtractionOnDrivingLicence(int pointsToSubtract, int availablePoints) {
+        int subtractedPoints = availablePoints - pointsToSubtract;
+        return Math.max(subtractedPoints, DrivingLicencePointsRange.MINIMUM.getRangeValue());
     }
 }

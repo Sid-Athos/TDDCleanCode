@@ -11,9 +11,15 @@ import java.util.UUID;
 @Builder
 public class DrivingLicence {
     UUID id;
+
     String driverSocialSecurityNumber;
 
     @With
     @Default
-    int availablePoints = 12;
+    int availablePoints = DrivingLicencePointsRange.MAXIMUM.getRangeValue();
+
+
+    public static DrivingLicence updateDrivingLicencePoints(DrivingLicence foundDrivingLicence, int subtractedPoints) {
+        return foundDrivingLicence.withAvailablePoints(subtractedPoints);
+    }
 }
