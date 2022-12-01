@@ -3,7 +3,6 @@ package fr.esgi.cleancode.service;
 import fr.esgi.cleancode.database.InMemoryDatabase;
 import fr.esgi.cleancode.exception.InvalidDriverSocialSecurityNumberException;
 import fr.esgi.cleancode.model.DrivingLicence;
-import org.springframework.web.client.ResourceAccessException;
 
 import java.util.UUID;
 
@@ -20,13 +19,14 @@ class DrivingLicenceCreationService {
 
     protected DrivingLicence createDrivingLicenceFromSocialSecurityNumber(String driverToRegisterSocialSecurityNumber){
         UUID drivingLicenceId = drivingLicenceIdGenerationService.generateNewDrivingLicenceId();
-        if(SocialSecurityNumberValidator.isValid(driverToRegisterSocialSecurityNumber)){
+        // Because crappy ID generation system
+        if(inMemoryDrivingLicenceDatabase.findById(drivingLicenceId).isEmpty()){
             var drivingLicenceToSave = DrivingLicence.builder()
                     .id(drivingLicenceId)
                     .driverSocialSecurityNumber(driverToRegisterSocialSecurityNumber)
                     .build();
             return inMemoryDrivingLicenceDatabase.save(drivingLicenceId, drivingLicenceToSave);
         }
-        throw new InvalidDriverSocialSecurityNumberException("Must be 15 digits");
+        throw new InvalidDriverSocialSecurityNumberException("Social Number is invalid. Must be 15 digits");
     }
 }

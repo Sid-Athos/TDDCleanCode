@@ -15,13 +15,15 @@ public class DrivingLicencePointOperationService {
 
     public DrivingLicence subtractPointsFromDrivingLicence(UUID drivingLicenceId, int pointsToSubtract) {
         Optional<DrivingLicence> maybeDrivingLicence = inMemoryDrivingLicenceDatabase.findById(drivingLicenceId);
-        var foundDrivingLicence = maybeDrivingLicence.orElseThrow(() ->
-                new ResourceNotFoundException("Driving Licence does not exist !")
-        );
-        var drivingLicenceAvailablePoints = foundDrivingLicence.getAvailablePoints();
 
+        var foundDrivingLicence = maybeDrivingLicence.orElseThrow(() -> {
+            throw new ResourceNotFoundException("Driving Licence does not exist !");
+        });
+        var drivingLicenceAvailablePoints = foundDrivingLicence.getAvailablePoints();
         int subtractedPoints = computePointsSubtractionOnDrivingLicence(pointsToSubtract, drivingLicenceAvailablePoints);
+
         DrivingLicence drivingLicenceWithUpdatedPoints = DrivingLicence.updateDrivingLicencePoints(foundDrivingLicence, subtractedPoints);
+
         inMemoryDrivingLicenceDatabase.save(drivingLicenceId, drivingLicenceWithUpdatedPoints);
         return drivingLicenceWithUpdatedPoints;
     }

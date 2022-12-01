@@ -22,22 +22,22 @@ public class DrivingLicencePointOperationServiceTest {
 
     @InjectMocks
     private DrivingLicencePointOperationService drivingLicencePointOperationService;
+
     @Mock
     private InMemoryDatabase inMemoryDrivingLicenceDatabase;
     @Captor
     ArgumentCaptor<DrivingLicence> drivingLicenceArgumentCaptor;
-
     @Test
     void shouldThrowResourceNotFoundExceptionWhenTryingToSubtractPointsButNoDrivingLicenceFound() {
-        UUID uuidToTest = UUID.randomUUID();
+        UUID uuid = UUID.randomUUID();
         int subtractedPoint = 1;
 
-        Mockito.when(inMemoryDrivingLicenceDatabase.findById(uuidToTest))
+        Mockito.when(inMemoryDrivingLicenceDatabase.findById(uuid))
                 .thenReturn(Optional.empty());
 
         Assertions.assertThrows(ResourceNotFoundException.class, () -> {
-            drivingLicencePointOperationService.subtractPointsFromDrivingLicence(uuidToTest, subtractedPoint);
-            Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1)).findById(uuidToTest);
+            drivingLicencePointOperationService.subtractPointsFromDrivingLicence(uuid, subtractedPoint);
+            Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1)).findById(uuid);
             Mockito.verifyNoMoreInteractions();
         });
     }
@@ -46,24 +46,24 @@ public class DrivingLicencePointOperationServiceTest {
     @ValueSource(ints = {13,14,15,16})
     void ShouldSetDrivingLicenceAvailablePointsToZeroWhenSubtractingPointsOverlappingARangeFromMinToMaxPoints(int drivingLicencePointsToSubtract) {
 
-        UUID uuidToTest = UUID.randomUUID();
+        UUID uuid = UUID.randomUUID();
         Optional<DrivingLicence> drivenLicenceToUseForFind = Optional.of(DrivingLicence.builder()
-            .id(uuidToTest)
+            .id(uuid)
             .build());
         DrivingLicence drivenLicenceToUseForSave = DrivingLicence.builder()
                 .availablePoints(Math.max(DrivingLicencePointsRange.MAXIMUM.getRangeValue() - drivingLicencePointsToSubtract, 0))
-                .id(uuidToTest)
+                .id(uuid)
                 .build();
-        Mockito.when(inMemoryDrivingLicenceDatabase.findById(uuidToTest))
+        Mockito.when(inMemoryDrivingLicenceDatabase.findById(uuid))
                 .thenReturn(drivenLicenceToUseForFind);
-        Mockito.when(inMemoryDrivingLicenceDatabase.save(uuidToTest,drivenLicenceToUseForSave))
+        Mockito.when(inMemoryDrivingLicenceDatabase.save(uuid,drivenLicenceToUseForSave))
                 .thenReturn(drivenLicenceToUseForSave);
 
 
-        DrivingLicence returnedLicence = drivingLicencePointOperationService.subtractPointsFromDrivingLicence(uuidToTest, drivingLicencePointsToSubtract);
+        DrivingLicence returnedLicence = drivingLicencePointOperationService.subtractPointsFromDrivingLicence(uuid, drivingLicencePointsToSubtract);
 
-        Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1)).findById(uuidToTest);
-        Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1)).save(uuidToTest,drivenLicenceToUseForSave);
+        Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1)).findById(uuid);
+        Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1)).save(uuid,drivenLicenceToUseForSave);
         Mockito.verifyNoMoreInteractions(inMemoryDrivingLicenceDatabase);
         Assertions.assertEquals(0, returnedLicence.getAvailablePoints());
     }
@@ -71,20 +71,20 @@ public class DrivingLicencePointOperationServiceTest {
     @ParameterizedTest
     @ValueSource(ints = {1,2,3,4,5,6})
     void shouldSubtractPointsFromExistingDrivingLicenceWithFullPoints(int pointsToRemoveFromDrivingLicence) {
-        UUID uuidToTest = UUID.randomUUID();
+        UUID uuid = UUID.randomUUID();
         Optional<DrivingLicence> drivenLicenceToReturn =
-                Optional.of(DrivingLicence.builder().id(uuidToTest).build());
+                Optional.of(DrivingLicence.builder().id(uuid).build());
         int subtractedPoints = drivenLicenceToReturn.get().getAvailablePoints() - pointsToRemoveFromDrivingLicence;
-        Mockito.when(inMemoryDrivingLicenceDatabase.findById(uuidToTest))
+        Mockito.when(inMemoryDrivingLicenceDatabase.findById(uuid))
                 .thenReturn(drivenLicenceToReturn);
         var updatedPointsDrivingLicence = drivenLicenceToReturn.get().withAvailablePoints(subtractedPoints);
-        Mockito.when(inMemoryDrivingLicenceDatabase.save(uuidToTest,updatedPointsDrivingLicence))
+        Mockito.when(inMemoryDrivingLicenceDatabase.save(uuid,updatedPointsDrivingLicence))
                 .thenReturn(updatedPointsDrivingLicence);
 
-        DrivingLicence returnedLicenceWithSubtractedPoints = drivingLicencePointOperationService.subtractPointsFromDrivingLicence(uuidToTest, pointsToRemoveFromDrivingLicence);
+        DrivingLicence returnedLicenceWithSubtractedPoints = drivingLicencePointOperationService.subtractPointsFromDrivingLicence(uuid, pointsToRemoveFromDrivingLicence);
 
-        Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1)).findById(eq(uuidToTest));
-        Mockito.verify(inMemoryDrivingLicenceDatabase,Mockito.times(1)).save(eq(uuidToTest), drivingLicenceArgumentCaptor.capture());
+        Mockito.verify(inMemoryDrivingLicenceDatabase, Mockito.times(1)).findById(eq(uuid));
+        Mockito.verify(inMemoryDrivingLicenceDatabase,Mockito.times(1)).save(eq(uuid), drivingLicenceArgumentCaptor.capture());
         Mockito.verifyNoMoreInteractions(inMemoryDrivingLicenceDatabase);
         Assertions.assertEquals(subtractedPoints, returnedLicenceWithSubtractedPoints.getAvailablePoints());
         Assertions.assertEquals(drivingLicenceArgumentCaptor.getValue().getId(), returnedLicenceWithSubtractedPoints.getId());
