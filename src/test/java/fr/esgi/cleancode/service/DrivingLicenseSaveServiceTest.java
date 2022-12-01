@@ -1,7 +1,9 @@
 package fr.esgi.cleancode.service;
 
 import fr.esgi.cleancode.database.InMemoryDatabase;
+import fr.esgi.cleancode.exception.InvalidDriverSocialSecurityNumberException;
 import fr.esgi.cleancode.model.DrivingLicence;
+import fr.esgi.cleancode.model.DrivingLicencePointsRange;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,8 +50,16 @@ public class DrivingLicenseSaveServiceTest {
         Mockito.verifyNoMoreInteractions(inMemoryDrivingLicenceDatabase);
         DrivingLicence capturedDrivingLicense = drivingLicenceArgumentCaptor.getValue();
         Assertions.assertEquals(capturedDrivingLicense.getId(), uuidToTest);
-        Assertions.assertEquals(capturedDrivingLicense.getAvailablePoints(), 12);
+        Assertions.assertEquals(capturedDrivingLicense.getAvailablePoints(), DrivingLicencePointsRange.MAXIMUM.getRangeValue());
         Assertions.assertEquals(capturedDrivingLicense.getDriverSocialSecurityNumber(), socialSecurityNumber);
         Assertions.assertEquals(capturedDrivingLicense.getAvailablePoints(), returnedDrivingLicence.getAvailablePoints());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", " ","   ", "12345","123123ABC123123","11111111111111111" })
+    void shouldThrowErrorWhenCreatingDrivingLicence(String socialSecurityNumber) {
+        /**Assertions.assertThrows(InvalidDriverSocialSecurityNumberException.class, () -> {
+            drivingLicenceCreationService.createDrivingLicenceFromSocialSecurityNumber(socialSecurityNumber);
+        });*/
     }
 }
