@@ -56,7 +56,7 @@ public class DrivingLicenseSaveServiceTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ","   ", "12345","123123ABC123123","11111111111111111" })
-    void shouldThrowErrorWhenCreatingDrivingLicence(String socialSecurityNumber) {
+    void shouldThrowResourceNotFoundExceptionWhenCreatingDrivingLicence(String socialSecurityNumber) {
         Assertions.assertThrows(InvalidDriverSocialSecurityNumberException.class, () -> {
             drivingLicenceCreationService.createDrivingLicenceFromSocialSecurityNumber(socialSecurityNumber);
         });
