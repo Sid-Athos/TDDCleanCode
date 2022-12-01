@@ -1,6 +1,7 @@
 package fr.esgi.cleancode.service;
 
 import fr.esgi.cleancode.database.InMemoryDatabase;
+import fr.esgi.cleancode.exception.InvalidDriverSocialSecurityNumberException;
 import fr.esgi.cleancode.model.DrivingLicence;
 import org.springframework.web.client.ResourceAccessException;
 
@@ -17,18 +18,15 @@ class DrivingLicenceCreationService {
         this.drivingLicenceIdGenerationService = drivingLicenceIdGenerationService;
     }
 
-
-     /** @see SocialSecurityNumberValidator for social security number validation */
     protected DrivingLicence createDrivingLicenceFromSocialSecurityNumber(String driverToRegisterSocialSecurityNumber){
         UUID drivingLicenceId = drivingLicenceIdGenerationService.generateNewDrivingLicenceId();
-        // Because crappy ID generation system
-        inMemoryDrivingLicenceDatabase.findById(drivingLicenceId).ifPresent(drivingLicence -> {
-            throw new ResourceAccessException("Crappy DB already has a driving licence. " + drivingLicence);
-        });
-        var drivingLicenceToSave = DrivingLicence.builder()
-                .id(drivingLicenceId)
-                .driverSocialSecurityNumber(driverToRegisterSocialSecurityNumber)
-                .build();
-        return inMemoryDrivingLicenceDatabase.save(drivingLicenceId, drivingLicenceToSave);
+        if(SocialSecurityNumberValidator.isValid(driverToRegisterSocialSecurityNumber)){
+            var drivingLicenceToSave = DrivingLicence.builder()
+                    .id(drivingLicenceId)
+                    .driverSocialSecurityNumber(driverToRegisterSocialSecurityNumber)
+                    .build();
+            return inMemoryDrivingLicenceDatabase.save(drivingLicenceId, drivingLicenceToSave);
+        }
+        throw new InvalidDriverSocialSecurityNumberException("Must be 15 digits");
     }
 }
