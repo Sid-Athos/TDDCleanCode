@@ -1,5 +1,6 @@
 package fr.esgi.cleancode.service;
 
+import fr.esgi.cleancode.validators.SocialSecurityNumberValidator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;

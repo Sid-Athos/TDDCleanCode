@@ -3,7 +3,7 @@ package fr.esgi.cleancode.service;
 import fr.esgi.cleancode.database.InMemoryDatabase;
 import fr.esgi.cleancode.exception.InvalidDriverSocialSecurityNumberException;
 import fr.esgi.cleancode.model.DrivingLicence;
-import org.springframework.web.client.ResourceAccessException;
+import fr.esgi.cleancode.validators.SocialSecurityNumberValidator;
 
 import java.util.UUID;
 
